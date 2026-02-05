@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Secure Gateway</title>
+<title>System Gateway</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   body { 
     background-color: #000; 
-    color: #0f0; 
+    color: #00ff00; 
     font-family: 'Courier New', monospace; 
     text-align: center; 
     padding-top: 20%; 
@@ -14,13 +14,22 @@
   .box { 
     border: 2px solid #333; 
     padding: 20px; 
-    display: inline-block; 
     background: #111;
+    display: inline-block;
     max-width: 90%;
   }
-  .success { border-color: #0f0; }
+  .success { border-color: #00ff00; }
   .fail { border-color: red; color: red; }
-  .debug { margin-top: 20px; font-size: 10px; color: #555; }
+  h1 { font-size: 20px; text-transform: uppercase; margin-bottom: 20px;}
+  p { margin: 5px 0; color: #ccc; font-size: 14px; }
+  .debug { 
+    margin-top: 20px; 
+    font-size: 11px; 
+    color: #666; 
+    border-top: 1px solid #333; 
+    padding-top: 10px;
+    text-align: left;
+  }
 </style>
 </head>
 <body>
@@ -30,54 +39,74 @@
     <div id="secret">
       <p>Hardware verification failed.</p>
     </div>
+    
     <div class="debug" id="debugInfo">Initializing...</div>
   </div>
 
 <script>
   // ==========================================
-  //  ENTER YOUR PASSWORD HERE
+  //  1. CONFIGURATION
   // ==========================================
   var ADMIN_PASS = "YOUR_REAL_PASSWORD_HERE"; 
 
-  // ==========================================
-  //  VERIFIED HARDWARE DNA
-  // ==========================================
-  
-  // 1. HP LAPTOP (Your confirmed specs)
-  var hp_w = 1536; 
-  var hp_c = 4;
-  var hp_os = "Win32";
+  // --- HP LAPTOP DATA (Verified from your logs) ---
+  // Width: 1536 (1920 / 1.25 scale)
+  // Cores: 4
+  // RAM: 8 (Browser caps reporting at 8GB)
+  // Ratio: 1.25 (Standard for your resolution)
+  var hp_w     = 1536; 
+  var hp_c     = 4;    
+  var hp_ram   = 8;    
+  var hp_ratio = 1.25; 
 
-  // 2. REDMI NOTE 10S (From your Screenshots)
-  var redmi_w = 393; 
-  var redmi_c = 8;
-  
+  // --- REDMI NOTE 10S DATA (Verified from screenshots) ---
+  var redmi_w     = 393; 
+  var redmi_c     = 8;
+  var redmi_model = "M2101K7BI"; 
+
   // ==========================================
-  //  THE CHECK
+  //  2. THE CHECK
   // ==========================================
   
+  // Get current browser metrics
   var w = window.screen.width;
   var c = navigator.hardwareConcurrency;
-  var os = navigator.platform;
+  var ram = navigator.deviceMemory || 8; // Default to 8 if hidden
+  var ratio = window.devicePixelRatio;
   var ua = navigator.userAgent;
 
-  // Logic: HP Laptop
-  var isHP = (os === hp_os) && (w === hp_w) && (c === hp_c);
+  // LOGIC: HP LAPTOP
+  // Must match Width, Cores, RAM, and Pixel Ratio
+  var matchHP = (w === hp_w) && (c === hp_c) && (ram === hp_ram) && (ratio === hp_ratio);
 
-  // Logic: Redmi Note 10S
-  // We check for Android AND the exact screen width AND exact cores
-  var isRedmi = (ua.indexOf("Android") > -1) && (w === redmi_w) && (c === redmi_c);
+  // LOGIC: REDMI NOTE 10S
+  // Must match Android, Width, Cores, and Model ID
+  var matchRedmi = (ua.indexOf("Android") > -1) && 
+                   (w === redmi_w) && 
+                   (c === redmi_c) && 
+                   (ua.indexOf(redmi_model) > -1);
 
-  // Debugging (Shows you what the site sees)
-  document.getElementById("debugInfo").innerText = "DETECTED: W=" + w + " | C=" + c + " | OS=" + os;
+  // ==========================================
+  //  3. RESULT DISPLAY
+  // ==========================================
 
-  if (isHP || isRedmi) {
-    // UNLOCK
+  // Create a debug string so you can troubleshoot if needed
+  var debugText = 
+    "<b>DETECTED:</b><br>" +
+    "Width: " + w + " (Target HP: 1536 / Redmi: 393)<br>" +
+    "Cores: " + c + " (Target HP: 4 / Redmi: 8)<br>" +
+    "RAM: " + ram + " (Target HP: 8)<br>" +
+    "Ratio: " + ratio + " (Target HP: 1.25)<br>" +
+    "Model Found: " + (ua.indexOf(redmi_model) > -1 ? "Yes" : "No");
+
+  document.getElementById("debugInfo").innerHTML = debugText;
+
+  if (matchHP || matchRedmi) {
     var box = document.getElementById("statusBox");
     box.className = "box success";
     document.getElementById("title").innerText = "AUTHORIZED";
     document.getElementById("secret").innerHTML = 
-      "<p>PASSWORD:</p><h2 style='background:#222; padding:10px; user-select:all'>" + ADMIN_PASS + "</h2>";
+      "<p>PASSWORD:</p><h2 style='background:#222; padding:15px; user-select:all; color:#fff'>" + ADMIN_PASS + "</h2>";
   }
 </script>
 
