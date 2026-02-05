@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Secure Gateway</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body { 
+    background-color: #000; 
+    color: #0f0; 
+    font-family: 'Courier New', monospace; 
+    text-align: center; 
+    padding-top: 20%; 
+  }
+  .box { 
+    border: 2px solid #333; 
+    padding: 20px; 
+    display: inline-block; 
+    background: #111;
+    max-width: 90%;
+  }
+  .success { border-color: #0f0; }
+  .fail { border-color: red; color: red; }
+  .debug { margin-top: 20px; font-size: 10px; color: #555; }
+</style>
+</head>
+<body>
+
+  <div id="statusBox" class="box fail">
+    <h1 id="title">ACCESS DENIED</h1>
+    <div id="secret">
+      <p>Hardware verification failed.</p>
+    </div>
+    <div class="debug" id="debugInfo">Initializing...</div>
+  </div>
+
+<script>
+  // ==========================================
+  //  ENTER YOUR PASSWORD HERE
+  // ==========================================
+  var ADMIN_PASS = "YOUR_REAL_PASSWORD_HERE"; 
+
+  // ==========================================
+  //  VERIFIED HARDWARE DNA
+  // ==========================================
+  
+  // 1. HP LAPTOP (Your confirmed specs)
+  var hp_w = 1536; 
+  var hp_c = 4;
+  var hp_os = "Win32";
+
+  // 2. REDMI NOTE 10S (From your Screenshots)
+  var redmi_w = 393; 
+  var redmi_c = 8;
+  
+  // ==========================================
+  //  THE CHECK
+  // ==========================================
+  
+  var w = window.screen.width;
+  var c = navigator.hardwareConcurrency;
+  var os = navigator.platform;
+  var ua = navigator.userAgent;
+
+  // Logic: HP Laptop
+  var isHP = (os === hp_os) && (w === hp_w) && (c === hp_c);
+
+  // Logic: Redmi Note 10S
+  // We check for Android AND the exact screen width AND exact cores
+  var isRedmi = (ua.indexOf("Android") > -1) && (w === redmi_w) && (c === redmi_c);
+
+  // Debugging (Shows you what the site sees)
+  document.getElementById("debugInfo").innerText = "DETECTED: W=" + w + " | C=" + c + " | OS=" + os;
+
+  if (isHP || isRedmi) {
+    // UNLOCK
+    var box = document.getElementById("statusBox");
+    box.className = "box success";
+    document.getElementById("title").innerText = "AUTHORIZED";
+    document.getElementById("secret").innerHTML = 
+      "<p>PASSWORD:</p><h2 style='background:#222; padding:10px; user-select:all'>" + ADMIN_PASS + "</h2>";
+  }
+</script>
+
+</body>
+</html>
