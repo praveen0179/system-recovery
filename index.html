@@ -43,7 +43,7 @@
 
 <script>
   // ==========================================
-  //  1. ENCRYPTED DATA (Safe to share)
+  //  1. ENCRYPTED DATA (Your generated codes)
   // ==========================================
   
   // HP CIPHER (Decrypts only with Width 1536)
@@ -55,37 +55,31 @@
   // ==========================================
   //  2. HARDWARE KEYS
   // ==========================================
-  var hp_key = 1536;      // The math key for Laptop
-  var redmi_key = 393;    // The math key for Mobile
+  var hp_key = 1536;      // Laptop Key
+  var redmi_key = 393;    // Mobile Key
   
-  // Verification Checks (To ensure it's really you)
-  var redmi_model = "M2101K7BI"; 
-  var hp_cores = 4;
-
   // ==========================================
   //  3. THE DECRYPTION ENGINE
   // ==========================================
   
   var w = window.screen.width;
-  var c = navigator.hardwareConcurrency;
-  var ua = navigator.userAgent;
-  var isAndroid = ua.indexOf("Android") > -1;
-
   var decryptedPass = "";
   var deviceType = "";
 
   // CHECK: IS THIS THE LAPTOP?
-  if (w === hp_key && c === hp_cores && !isAndroid) {
+  // Logic: Exact Width 1536
+  if (w === hp_key) {
     deviceType = "HP Laptop";
     decryptedPass = decrypt(HP_CIPHER, hp_key);
   } 
   // CHECK: IS THIS THE MOBILE?
-  else if (w === redmi_key && ua.indexOf(redmi_model) > -1) {
+  // Logic: Exact Width 393 (Removed 'isAndroid' check because it was failing)
+  else if (w === redmi_key) {
     deviceType = "Redmi Note 10S";
     decryptedPass = decrypt(REDMI_CIPHER, redmi_key);
   }
 
-  // DECRYPT FUNCTION (XOR Logic)
+  // DECRYPT FUNCTION
   function decrypt(cipher, key) {
     var result = "";
     for(var i=0; i<cipher.length; i++) {
@@ -108,7 +102,7 @@
     document.getElementById("debugInfo").innerText = "Hardware Key Accepted: " + w;
   } else {
     // FAIL
-    document.getElementById("debugInfo").innerText = "Hardware Mismatch. Your Width: " + w + " | Required: " + hp_key + " or " + redmi_key;
+    document.getElementById("debugInfo").innerText = "Access Denied. Your Width: " + w;
   }
 </script>
 
