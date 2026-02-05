@@ -17,96 +17,98 @@
     background: #111;
     display: inline-block;
     max-width: 90%;
+    word-wrap: break-word;
   }
   .success { border-color: #00ff00; }
   .fail { border-color: red; color: red; }
-  h1 { font-size: 20px; text-transform: uppercase; margin-bottom: 20px;}
-  p { margin: 5px 0; color: #ccc; font-size: 14px; }
+  h1 { font-size: 20px; margin-bottom: 20px; }
   .debug { 
     margin-top: 20px; 
     font-size: 11px; 
-    color: #666; 
+    color: #555; 
     border-top: 1px solid #333; 
     padding-top: 10px;
-    text-align: left;
   }
 </style>
 </head>
 <body>
 
   <div id="statusBox" class="box fail">
-    <h1 id="title">ACCESS DENIED</h1>
+    <h1 id="title">ENCRYPTED</h1>
     <div id="secret">
-      <p>Hardware verification failed.</p>
+      <p>Hardware key required to decrypt.</p>
     </div>
-    
-    <div class="debug" id="debugInfo">Initializing...</div>
+    <div class="debug" id="debugInfo">Waiting for hardware handshake...</div>
   </div>
 
 <script>
   // ==========================================
-  //  1. CONFIGURATION
-  // ==========================================
-  var ADMIN_PASS = "X33HRJ50XHP3HVA6BBL22CERBIRHR3"; 
-
-  // --- HP LAPTOP DATA (Verified from your logs) ---
-  // Width: 1536 (1920 / 1.25 scale)
-  // Cores: 4
-  // RAM: 8 (Browser caps reporting at 8GB)
-  // Ratio: 1.25 (Standard for your resolution)
-  var hp_w     = 1536; 
-  var hp_c     = 4;    
-  var hp_ram   = 8;    
-  var hp_ratio = 1.25; 
-
-  // --- REDMI NOTE 10S DATA (Verified from screenshots) ---
-  var redmi_w     = 393; 
-  var redmi_c     = 8;
-  var redmi_model = "M2101K7BI"; 
-
-  // ==========================================
-  //  2. THE CHECK
+  //  1. ENCRYPTED DATA (Safe to share)
   // ==========================================
   
-  // Get current browser metrics
+  // HP CIPHER (Decrypts only with Width 1536)
+  var HP_CIPHER = [94,53,53,78,84,76,51,54,94,78,86,53,78,80,71,48,68,68,74,52,52,69,67,84,68,79,84,78,84,53]; 
+
+  // REDMI CIPHER (Decrypts only with Width 393)
+  var REDMI_CIPHER = [210,185,185,194,216,192,191,186,210,194,218,185,194,220,203,188,200,200,198,184,184,201,207,216,200,195,216,194,216,185]; 
+
+  // ==========================================
+  //  2. HARDWARE KEYS
+  // ==========================================
+  var hp_key = 1536;      // The math key for Laptop
+  var redmi_key = 393;    // The math key for Mobile
+  
+  // Verification Checks (To ensure it's really you)
+  var redmi_model = "M2101K7BI"; 
+  var hp_cores = 4;
+
+  // ==========================================
+  //  3. THE DECRYPTION ENGINE
+  // ==========================================
+  
   var w = window.screen.width;
   var c = navigator.hardwareConcurrency;
-  var ram = navigator.deviceMemory || 8; // Default to 8 if hidden
-  var ratio = window.devicePixelRatio;
   var ua = navigator.userAgent;
+  var isAndroid = ua.indexOf("Android") > -1;
 
-  // LOGIC: HP LAPTOP
-  // Must match Width, Cores, RAM, and Pixel Ratio
-  var matchHP = (w === hp_w) && (c === hp_c) && (ram === hp_ram) && (ratio === hp_ratio);
+  var decryptedPass = "";
+  var deviceType = "";
 
-  // LOGIC: REDMI NOTE 10S
-  // Must match Android, Width, Cores, and Model ID
-  var matchRedmi = (ua.indexOf("Android") > -1) && 
-                   (w === redmi_w) && 
-                   (c === redmi_c) && 
-                   (ua.indexOf(redmi_model) > -1);
+  // CHECK: IS THIS THE LAPTOP?
+  if (w === hp_key && c === hp_cores && !isAndroid) {
+    deviceType = "HP Laptop";
+    decryptedPass = decrypt(HP_CIPHER, hp_key);
+  } 
+  // CHECK: IS THIS THE MOBILE?
+  else if (w === redmi_key && ua.indexOf(redmi_model) > -1) {
+    deviceType = "Redmi Note 10S";
+    decryptedPass = decrypt(REDMI_CIPHER, redmi_key);
+  }
+
+  // DECRYPT FUNCTION (XOR Logic)
+  function decrypt(cipher, key) {
+    var result = "";
+    for(var i=0; i<cipher.length; i++) {
+      result += String.fromCharCode(cipher[i] ^ (key % 255));
+    }
+    return result;
+  }
 
   // ==========================================
-  //  3. RESULT DISPLAY
+  //  4. DISPLAY RESULT
   // ==========================================
-
-  // Create a debug string so you can troubleshoot if needed
-  var debugText = 
-    "<b>DETECTED:</b><br>" +
-    "Width: " + w + " (Target HP: 1536 / Redmi: 393)<br>" +
-    "Cores: " + c + " (Target HP: 4 / Redmi: 8)<br>" +
-    "RAM: " + ram + " (Target HP: 8)<br>" +
-    "Ratio: " + ratio + " (Target HP: 1.25)<br>" +
-    "Model Found: " + (ua.indexOf(redmi_model) > -1 ? "Yes" : "No");
-
-  document.getElementById("debugInfo").innerHTML = debugText;
-
-  if (matchHP || matchRedmi) {
+  
+  if (decryptedPass !== "") {
+    // SUCCESS
     var box = document.getElementById("statusBox");
     box.className = "box success";
-    document.getElementById("title").innerText = "AUTHORIZED";
+    document.getElementById("title").innerText = "DECRYPTED: " + deviceType;
     document.getElementById("secret").innerHTML = 
-      "<p>PASSWORD:</p><h2 style='background:#222; padding:15px; user-select:all; color:#fff'>" + ADMIN_PASS + "</h2>";
+      "<p>PASSWORD:</p><h2 style='background:#222; padding:15px; user-select:all; color:#fff'>" + decryptedPass + "</h2>";
+    document.getElementById("debugInfo").innerText = "Hardware Key Accepted: " + w;
+  } else {
+    // FAIL
+    document.getElementById("debugInfo").innerText = "Hardware Mismatch. Your Width: " + w + " | Required: " + hp_key + " or " + redmi_key;
   }
 </script>
 
